@@ -29,10 +29,17 @@ Railway bhi bahut asan hai, bas GitHub connect karke deploy ho jata hai. Isme bh
 ---
 
 ### Render Troubleshooting (Agar 'Failed' ho jaye)
-1. **Logs Check Karein**: Render dashboard me "Logs" tab par click karein. Wahan red color me error dikhega (Jaise: "Module not found").
-2. **Web Service vs Static Site**: Dhyaan rahe aapne **"Web Service"** select kiya hai. "Static Site" par ye app nahi chalega.
-3. **Node Version**: Render settings me `NODE_VERSION` ko `20` ya `22` set kardein.
-4. **Environment Variables**: "Settings" me "Environment" tab par jayein aur ensure karein ki `GEMINI_API_KEY` add kar di hai.
+1. **Logs Check Karein**: Render dashboard me "Logs" tab par click karein. Wahan red color me error dikhega. Agar "AI service failed" hai, to iska matlab keys missing hain.
+2. **Web Service vs Static Site**: Dhyaan rahe aapne **"Web Service"** select kiya hai.
+3. **Environment Variables (IMPORTANT)**: 
+   - Render dashboard me apni service open karein.
+   - **Environment** tab par click karein.
+   - **Add Environment Variable** button dabayein.
+   - Ye keys zaroor dalein (Value aapke AI Studio Settings se milegi):
+     - `GEMINI_API_KEY`: (Face and identity detection ke liye)
+     - `REPLICATE_API_TOKEN`: (High quality image generation ke liye)
+     - `NODE_ENV`: `production`
+   - **Save Changes** karein aur app apne aap redeploy ho jayega.
 
 ---
 

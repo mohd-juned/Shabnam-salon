@@ -73,17 +73,17 @@ export default function AIGroomingTab() {
       
       try {
         const parsed = JSON.parse(err.message);
-        if (parsed.error === "AI Services Failed" || parsed.details) {
+        if (parsed.details) {
           const detailStrings = Object.entries(parsed.details || {})
             .map(([service, msg]) => `• ${service}: ${msg}`)
             .join("\n");
-          errorMessage = `AI Services Failed:\n${detailStrings}\n\nPlease check your keys in the Settings (Gear icon).`;
+          errorMessage = `${parsed.error || "AI Services Failed"}:\n${detailStrings}\n\n${parsed.suggestion || "Please check your keys."}`;
         } else if (parsed.error) {
-          errorMessage = parsed.error;
+          errorMessage = parsed.error + (parsed.suggestion ? `\n\nSuggestion: ${parsed.suggestion}` : "");
         }
       } catch (e) {
         if (err.message === "API_KEY_REQUIRED") {
-          errorMessage = "AI Setup Needed: Please provide an API key (Replicate, Together, or AIML) in the Settings Gear icon to preserve your face.";
+          errorMessage = "AI Setup Needed: Please provide an API key in Render Settings.";
         } else {
           errorMessage = err.message;
         }
@@ -189,9 +189,9 @@ export default function AIGroomingTab() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="flex items-center gap-3 bg-red-900/20 border border-red-500/30 p-5 rounded-2xl text-red-400 text-sm"
+                className="flex items-start gap-3 bg-red-900/20 border border-red-500/30 p-5 rounded-2xl text-red-400 text-sm whitespace-pre-wrap"
               >
-                <AlertCircle size={20} />
+                <AlertCircle size={20} className="mt-0.5 shrink-0" />
                 <span>{error}</span>
               </motion.div>
             )}

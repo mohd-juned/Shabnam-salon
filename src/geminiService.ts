@@ -27,7 +27,8 @@ export async function generateGroomingPreview(
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || "Generation failed. Please check your AI API keys in Settings.");
+      // Throw as stringified JSON so the UI can parse details if available
+      throw new Error(JSON.stringify(errorData));
     }
   } catch (error: any) {
     console.error("Fetch error:", error);
