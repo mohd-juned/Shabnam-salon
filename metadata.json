@@ -1,0 +1,8 @@
+{
+  "name": "Shabnam Men's Salon",
+  "description": "A premium Men's Salon experience with AI-powered virtual grooming previews and seamless booking.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": []
+}
