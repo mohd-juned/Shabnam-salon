@@ -1,5 +1,4 @@
 import express from "express";
-import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
 import { GoogleGenAI } from "@google/genai";
@@ -8,11 +7,18 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Resolve __dirname safely for both ESM and CJS
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 app.use(express.json({ limit: '50mb' }));
+
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok", time: new Date().toISOString(), env: process.env.NODE_ENV });
+});
 
 // --- AI SERVICE HELPERS ---
 
@@ -177,19 +183,57 @@ app.post("/api/groom", async (req, res) => {
 // --- VITE MIDDLEWARE ---
 
 async function start() {
+  console.log("Starting server initialization...");
   if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
+    console.log("Development mode detected. Loading Vite...");
+    try {
+      // Using a dynamic string to prevent bundlers from eagerly pulling in Vite
+      const viteModuleName = "vite";
+      const { createServer: createViteServer } = await import(viteModuleName);
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: "spa",
+      });
+      app.use(vite.middlewares);
+      console.log("Vite middleware loaded.");
+    } catch (e) {
+      console.error("Failed to load Vite middleware:", e);
+    }
   } else {
-    app.use(express.static(path.join(process.cwd(), "dist")));
-    app.get("*", (req, res) => res.sendFile(path.join(process.cwd(), "dist", "index.html")));
+    console.log("Production mode detected.");
+    // In production, we serve from the dist folder or current dir
+    // Since bundled server is IN dist/, __dirname IS dist/
+    const distPath = path.resolve(__dirname);
+    const rootPath = path.resolve(__dirname, "..");
+    console.log(`__dirname is: ${__dirname}`);
+    console.log(`Serving static files from: ${distPath}`);
+    
+    app.use(express.static(distPath));
+    app.get("*", (req, res) => {
+      // Don't intercept API calls
+      if (req.path.startsWith("/api")) return res.status(404).json({ error: "Not found" });
+      
+      const indexPath = path.join(distPath, "index.html");
+      const altIndexPath = path.join(rootPath, "dist", "index.html");
+
+      res.sendFile(indexPath, (err) => {
+        if (err) {
+          console.log(`Failed to find index.html at ${indexPath}, trying fallback...`);
+          res.sendFile(altIndexPath, (err2) => {
+            if (err2) {
+              console.error(`CRITICAL: index.html not found anywhere!`);
+              console.error(`Checked: ${indexPath} AND ${altIndexPath}`);
+              res.status(500).send("Application files missing. Please check your build logs on Render.");
+            }
+          });
+        }
+      });
+    });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+  app.listen(Number(PORT), "0.0.0.0", () => {
+    console.log(`Server is LIVE on port ${PORT}`);
+    console.log(`Health check at http://localhost:${PORT}/api/health`);
   });
 }
 
